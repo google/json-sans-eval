@@ -89,8 +89,10 @@ var jsonParse = (function () {
 
   // Constructor to use based on an open token.
   var firstTokenCtors = { '{': Object, '[': Array };
+                   
+  var hop = Object.hasOwnProperty;
 
-  return function (json) {
+  return function (json, opt_reviver) {
     // Split into tokens
     var toks = json.match(jsonToken);
     // Construct the object to return
@@ -172,6 +174,28 @@ var jsonParse = (function () {
     }
     // Fail if we've got an uncompleted object.
     if (stack.length) { throw new Error(); }
+
+    if (opt_reviver) {
+      // Based on walk as implemented in http://www.json.org/json2.js
+      var walk = function (holder, key) {
+        var value = holder[key];
+        if (value && typeof value === 'object') {
+          for (var k in value) {
+            if (hop.call(value, k)) {
+              var v = walk(value, k);
+              if (v !== void 0) {
+                value[k] = v;
+              } else {
+                delete value[k];
+              }
+            }
+          }
+        }
+        return opt_reviver.call(holder, key, value);
+      };
+      result = walk({ '': result }, '');
+    }
+
     return result;
   };
 })();
