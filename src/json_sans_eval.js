@@ -44,6 +44,23 @@
  * released.
  *
  * @param {string} json per RFC 4627
+ * @param {function} opt_reviver optional function that reworks JSON objects
+ *     post-parse per Chapter 15.12 of EcmaScript3.1.
+ *     If supplied, the function is called with a string key, and a value.
+ *     The value is the property of 'this'.  The reviver should return
+ *     the value to use in its place.  So if dates were serialized as
+ *     {@code { "type": "Date", "time": 1234 }}, then a reviver might look like
+ *     {@code
+ *     function (key, value) {
+ *       if (value && typeof value === 'object' && 'Date' === value.type) {
+ *         return new Date(value.time);
+ *       } else {
+ *         return value;
+ *       }
+ *     }}.
+ *     If the reviver returns {@code undefined} then the property named by key
+ *     will be deleted from its container.
+ *     {@code this} is bound to the object containing the specified property.
  * @return {Object|Array}
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
@@ -89,7 +106,7 @@ var jsonParse = (function () {
 
   // Constructor to use based on an open token.
   var firstTokenCtors = { '{': Object, '[': Array };
-                   
+
   var hop = Object.hasOwnProperty;
 
   return function (json, opt_reviver) {
