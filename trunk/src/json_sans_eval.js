@@ -197,14 +197,33 @@ var jsonParse = (function () {
       var walk = function (holder, key) {
         var value = holder[key];
         if (value && typeof value === 'object') {
+          var toDelete = null;
           for (var k in value) {
             if (hop.call(value, k)) {
+              // Recurse to properties first.  This has the effect of causing
+              // the reviver to be called on the object graph depth-first.
+
+              // Since 'this' is bound to the holder of the property, the
+              // reviver can access sibling properties of k including ones
+              // that have not yet been revived.
+
+              // The value returned by the reviver is used in place of the
+              // current value of property k.
+              // If it returns undefined then the property is deleted.
               var v = walk(value, k);
               if (v !== void 0) {
                 value[k] = v;
               } else {
-                delete value[k];
+                // Deleting properties inside the loop has vaguely defined
+                // semantics in ES3 and ES3.1.
+                if (!toDelete) { toDelete = []; }
+                toDelete.push(k);
               }
+            }
+          }
+          if (toDelete) {
+            for (var i = toDelete.length; --i >= 0;) {
+              delete value[toDelete[i]];
             }
           }
         }
