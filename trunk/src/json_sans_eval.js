@@ -199,7 +199,7 @@ var jsonParse = (function () {
         if (value && typeof value === 'object') {
           var toDelete = null;
           for (var k in value) {
-            if (hop.call(value, k)) {
+            if (hop.call(value, k) && value !== holder) {
               // Recurse to properties first.  This has the effect of causing
               // the reviver to be called on the object graph depth-first.
 
