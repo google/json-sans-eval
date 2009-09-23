@@ -106,12 +106,17 @@ var jsonParse = (function () {
     // Construct the object to return
     var result;
     var tok = toks[0];
+    var topLevelPrimitive = false;
     if ('{' === tok) {
       result = {};
     } else if ('[' === tok) {
       result = [];
     } else {
-      throw new Error(tok);
+      // The RFC only allows arrays or objects at the top level, but the JSON.parse
+      // defined by the EcmaScript 5 draft does allow strings, booleans, numbers, and null
+      // at the top level.
+      result = [];
+      topLevelPrimitive = true;
     }
 
     // If undefined, the key in an object key/value record to use for the next
@@ -120,7 +125,7 @@ var jsonParse = (function () {
     // Loop over remaining tokens maintaining a stack of uncompleted objects and
     // arrays.
     var stack = [result];
-    for (var i = 1, n = toks.length; i < n; ++i) {
+    for (var i = 1 - topLevelPrimitive, n = toks.length; i < n; ++i) {
       tok = toks[i];
 
       var cont;
@@ -181,7 +186,12 @@ var jsonParse = (function () {
       }
     }
     // Fail if we've got an uncompleted object.
-    if (stack.length) { throw new Error(); }
+    if (topLevelPrimitive) {
+      if (stack.length !== 1) { throw new Error(); }
+      result = result[0];
+    } else {
+      if (stack.length) { throw new Error(); }
+    }
 
     if (opt_reviver) {
       // Based on walk as implemented in http://www.json.org/json2.js
