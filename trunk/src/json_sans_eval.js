@@ -35,8 +35,8 @@
  * released.
  *
  * @param {string} json per RFC 4627
- * @param {function} opt_reviver optional function that reworks JSON objects
- *     post-parse per Chapter 15.12 of EcmaScript3.1.
+ * @param {function (this:Object, string, *):*} opt_reviver optional function
+ *     that reworks JSON objects post-parse per Chapter 15.12 of EcmaScript3.1.
  *     If supplied, the function is called with a string key, and a value.
  *     The value is the property of 'this'.  The reviver should return
  *     the value to use in its place.  So if dates were serialized as
